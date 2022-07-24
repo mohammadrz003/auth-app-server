@@ -4,7 +4,7 @@ import { join } from "path";
 import { DOMAIN, WEBSITE_NAME } from "../constants";
 import sendMail from "../functions/email-sender";
 import { randomBytes } from "crypto";
-import { RegisterValidations } from "../validators";
+import { RegisterValidations, AuthenticateValidations } from "../validators";
 import Validator from "../middlewares/validator-middleware";
 
 const router = Router();
@@ -66,13 +66,13 @@ router.post(
     } catch (error) {
       return res
         .status(500)
-        .json({ success: false, message: "Something went wrong." });
+        .json({ success: false, message: "An error occured" });
     }
   }
 );
 
 /**
- * @description Verify User Account
+ * @description To verify a new User's Account via email
  * @api /users/verify-now/:verificationCode
  * @access Public <Only via email>
  * @type GET
@@ -98,5 +98,46 @@ router.get("/verify-now/:verificationCode", async (req, res) => {
     return res.sendFile(join(__dirname, "../templates/errors.html"));
   }
 });
+
+/**
+ * @description To authenticate an user and get auth token
+ * @api /users/api/authenticate
+ * @access Public
+ * @type POST
+ */
+router.post(
+  "/api/authenticate",
+  AuthenticateValidations,
+  Validator,
+  async (req, res) => {
+    try {
+      let { username, password } = req.body;
+      let user = await User.findOne({ username });
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "Username not found.",
+        });
+      }
+      if (!(await user.comparePassword(password))) {
+        return res.status(401).json({
+          success: false,
+          message: "Incorrect password.",
+        });
+      }
+      let token = await user.generateJWT();
+      return res.status(200).json({
+        success: true,
+        user: user.getUserInfo(),
+        token: `Bearer ${token}`,
+        message: "You are now logged in.",
+      });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ success: false, message: "An error occured" });
+    }
+  }
+);
 
 export default router;

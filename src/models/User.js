@@ -71,7 +71,7 @@ UserSchema.methods.generatePasswordReset = function () {
 };
 
 UserSchema.methods.getUserInfo = function () {
-  return pick(this, ["_id", "username", "email", "name"]);
+  return pick(this, ["_id", "username", "email", "name", "verified"]);
 };
 
 const User = model("users", UserSchema);
