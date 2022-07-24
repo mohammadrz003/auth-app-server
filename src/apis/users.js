@@ -1,6 +1,7 @@
 import { User } from "../models";
 import { Router } from "express";
-import { DOMAIN } from "../constants";
+import { join } from "path";
+import { DOMAIN, WEBSITE_NAME } from "../constants";
 import sendMail from "../functions/email-sender";
 import { randomBytes } from "crypto";
 import { RegisterValidations } from "../validators";
@@ -53,7 +54,7 @@ router.post(
     `;
       sendMail(
         user.email,
-        "(SITE_NAME)",
+        `${WEBSITE_NAME}`,
         "Verify Account",
         "Please Verify Your Account.",
         html
@@ -69,5 +70,33 @@ router.post(
     }
   }
 );
+
+/**
+ * @description Verify User Account
+ * @api /users/verify-now/:verificationCode
+ * @access Public <Only via email>
+ * @type GET
+ */
+router.get("/verify-now/:verificationCode", async (req, res) => {
+  try {
+    let { verificationCode } = req.params;
+    let user = await User.findOne({ verificationCode });
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized access. Invalid verification code.",
+      });
+    }
+    user.verified = true;
+    user.verificationCode = undefined;
+    await user.save();
+    return res.sendFile(
+      join(__dirname, "../templates/verification-success.html")
+    );
+  } catch (error) {
+    console.log("ERR", error.message);
+    return res.sendFile(join(__dirname, "../templates/errors.html"));
+  }
+});
 
 export default router;
