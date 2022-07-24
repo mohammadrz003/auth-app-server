@@ -1,11 +1,12 @@
+import { join } from "path";
 import { User } from "../models";
 import { Router } from "express";
-import { join } from "path";
+import { randomBytes } from "crypto";
 import { DOMAIN, WEBSITE_NAME } from "../constants";
 import sendMail from "../functions/email-sender";
-import { randomBytes } from "crypto";
-import { RegisterValidations, AuthenticateValidations } from "../validators";
+import { userAuth } from "../middlewares/auth-guard";
 import Validator from "../middlewares/validator-middleware";
+import { RegisterValidations, AuthenticateValidations } from "../validators";
 
 const router = Router();
 
@@ -139,5 +140,17 @@ router.post(
     }
   }
 );
+
+/**
+ * @description To get the authenticated user's profile
+ * @api /users/api/authenticate
+ * @access Private
+ * @type GET
+ */
+router.get("/api/authenticate", userAuth, async (req, res) => {
+  return res.status(200).json({
+    user: req.user,
+  });
+});
 
 export default router;
