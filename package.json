@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node -r esm",
+    "start": "node -r esm .",
     "dev": "nodemon -r esm ."
   },
   "author": "",
